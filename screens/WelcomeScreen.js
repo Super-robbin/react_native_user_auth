@@ -16,7 +16,8 @@ function WelcomeScreen() {
       .get(
         `https://react-native-course-5346c-default-rtdb.firebaseio.com/message.json?auth=${token}`
       )
-      .then((response) => setFetchedMessage(response.data));
+      .then((response) => setFetchedMessage(response.data))
+      .catch((error) => console.log(error));
   }, [token]);
 
   return (

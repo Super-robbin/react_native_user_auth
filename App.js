@@ -1,7 +1,9 @@
-import { useContext } from "react";
+import { useContext, useEffect, useState } from "react";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { StatusBar } from "expo-status-bar";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as SplashScreen from 'expo-splash-screen';
 
 import LoginScreen from "./screens/LoginScreen";
 import SignupScreen from "./screens/SignupScreen";
@@ -11,6 +13,8 @@ import AuthContextProvider, { AuthContext } from "./store/auth-context";
 import IconButton from "./components/UI/IconButton";
 
 const Stack = createNativeStackNavigator();
+
+SplashScreen.preventAutoHideAsync();
 
 function AuthStack() {
   return (
@@ -66,12 +70,47 @@ function Navigation() {
   );
 }
 
+const Root = () => {
+  const [isTryingLogin, setIsTryingLogin] = useState(true)
+  const authCtx = useContext(AuthContext)
+
+  useEffect(() => {
+    const fetchToken = async () => {
+      const storedToken = await AsyncStorage.getItem("token");
+
+      if (storedToken) {
+        authCtx.authenticate(storedToken);
+      }
+
+      setIsTryingLogin(false)
+      await SplashScreen.hideAsync();
+    };
+
+    fetchToken();
+  }, []);
+
+  useEffect(() => {
+    if (!isTryingLogin) {
+      SplashScreen.hideAsync(); // Ensure the splash screen is hidden once login check is complete
+    }
+  }, [isTryingLogin]);
+
+  if (isTryingLogin) {
+    return null; // Render nothing while we're checking for the token
+  }
+
+  return <Navigation />
+}
+
 export default function App() {
+
+  
+
   return (
     <>
       <StatusBar style="light" />
       <AuthContextProvider>
-        <Navigation />
+        <Root />
       </AuthContextProvider>
     </>
   );
